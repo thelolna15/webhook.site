@@ -18,7 +18,6 @@ services:
       - APP_LOG=errorlog
       - DB_CONNECTION=sqlite
       - REDIS_HOST=webhook-redis
-      - REDIS_PASSWORD=password-redis
       - REDIS_PORT=6379
       - BROADCAST_DRIVER=redis
       - CACHE_DRIVER=redis
@@ -40,7 +39,7 @@ services:
       - net-webhook
     volumes:
       - webhook-redis-data:/data
-    command: redis-server --requirepass "password-redis" --appendonly yes
+    command: redis-server --appendonly yes
 
   laravel-echo-server:
     image: webhooksite/laravel-echo-server
@@ -54,7 +53,6 @@ services:
       - LARAVEL_ECHO_SERVER_PORT=6001
       - ECHO_REDIS_PORT=6379
       - ECHO_REDIS_HOSTNAME=webhook-redis
-      - ECHO_REDIS_PASSWORD=password-redis
       - ECHO_PROTOCOL=http
       - ECHO_ALLOW_CORS=true
       - ECHO_ALLOW_ORIGIN=*
