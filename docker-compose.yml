@@ -1,48 +1,80 @@
 services:
-  webhook:
-    container_name: "webhook-site"
-    image: "webhooksite/webhook.site"
+  webhook-site:
+    image: webhooksite/webhook.site
     # Enable build for development:
     # build:
     #   dockerfile: Dockerfile
     #   context: ./
-    command: php artisan queue:work --daemon --tries=3 --timeout=10
+    container_name: webhook-site
+    restart: always
     ports:
       - "8084:80"
+    networks:
+      - net-webhook
     environment:
       - APP_ENV=dev
       - APP_DEBUG=true
       - APP_URL=http://localhost:8084
       - APP_LOG=errorlog
       - DB_CONNECTION=sqlite
-      - REDIS_HOST=redis
+      - REDIS_HOST=webhook-redis
+      - REDIS_PASSWORD=password-redis
+      - REDIS_PORT=6379
       - BROADCAST_DRIVER=redis
       - CACHE_DRIVER=redis
       - QUEUE_DRIVER=redis
       - ECHO_HOST_MODE=path
+      - WEBHOOK_EXPIRY=2592000 # 30 days
+      - WEBHOOK_MAX_REQUESTS=5000 # 5000 requests
     depends_on:
-      - redis
+      - webhook-redis
+    command: php artisan queue:work --daemon --tries=3 --timeout=10
 
-  redis:
-    container_name: "webhook-redis"
-    image: "redis:alpine"
+  webhook-redis:
+    image: redis:alpine
+    container_name: webhook-redis
+    restart: always
+    # ports:
+    #   - "6379:6379"
+    networks:
+      - net-webhook
+    volumes:
+      - webhook-redis-data:/data
+    command: redis-server --requirepass "password-redis" --appendonly yes
 
   laravel-echo-server:
-    container_name: "laravel-echo-server"
-    image: "webhooksite/laravel-echo-server"
-    command:
-      - exec
-      - laravel-echo-server
-      - start
-      - --force
+    image: webhooksite/laravel-echo-server
+    container_name: laravel-echo-server
+    restart: always
+    networks:
+      - net-webhook
     environment:
-      - LARAVEL_ECHO_SERVER_AUTH_HOST=http://webhook
+      - LARAVEL_ECHO_SERVER_AUTH_HOST=http://webhook-site
       - LARAVEL_ECHO_SERVER_HOST=0.0.0.0
       - LARAVEL_ECHO_SERVER_PORT=6001
       - ECHO_REDIS_PORT=6379
-      - ECHO_REDIS_HOSTNAME=redis
+      - ECHO_REDIS_HOSTNAME=webhook-redis
+      - ECHO_REDIS_PASSWORD=password-redis
       - ECHO_PROTOCOL=http
       - ECHO_ALLOW_CORS=true
       - ECHO_ALLOW_ORIGIN=*
       - ECHO_ALLOW_METHODS=*
       - ECHO_ALLOW_HEADERS=*
+    depends_on:
+      - webhook-redis
+      - webhook-site
+    command:
+      - exec
+      - laravel-echo-server
+      - start
+      - --force
+
+volumes:
+  webhook-redis-data:
+    name: webhook-redis-data
+    driver: local
+
+networks:
+  net-webhook:
+    name: net-webhook
+    driver: bridge
