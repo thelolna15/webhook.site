@@ -33,7 +33,9 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="/" ui-sref="home()">&#x2693;&#xFE0F; Webhook Tester</a>
+                <a class="navbar-brand" href="/" ui-sref="home()">
+                    <span style="color: #00f3ff;">⚡</span> Webhook.site
+                </a>
             </div>
             <div id="navbar" class="navbar-collapse collapse">
                 <div class="nav navbar-left navbar-form">
@@ -200,8 +202,17 @@
                                                ga-on="click" ga-event-category="CustomActions" ga-event-action="toggleEnable"
                                                ng-change="toggleCors(token)"
                                         />
-                                        Enable CORS <sup class="muted">BETA</sup> &emsp;
+                                        Enable CORS &emsp;
                                     </label>
+
+                                    <!-- Server Redirect (bit.ly style) -->
+                                    <a href class="openModal btn btn-xs" 
+                                       ng-class="token.server_redirect_enabled ? 'btn-success' : 'btn-default'"
+                                       data-modal="#serverRedirectModal"
+                                       title="Server-side HTTP redirect (bit.ly style - no CORS issues!)">
+                                        <span class="glyphicon glyphicon-link"></span>
+                                        Redirect {{ token.server_redirect_enabled ? 'ON' : '' }}
+                                    </a>&emsp;
 
                                     <!-- Auto-JSON -->
                                     <label class="small"
@@ -363,7 +374,7 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">Redirection Settings</h4>
+                    <h4 class="modal-title">Redirection Settings (Client-Side XHR)</h4>
                 </div>
                 <div class="modal-body">
                     <form class="form-horizontal" id="redirectForm">
@@ -424,6 +435,123 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" ng-click="saveSettings()" data-dismiss="modal">Close
+                    </button>
+                </div>
+            </div><!-- /.modal-content -->
+        </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+
+    <!-- NEW: Server-Side Redirect Modal (bit.ly style - NO CORS!) -->
+    <div class="modal fade" tabindex="-1" role="dialog" id="serverRedirectModal">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title">🔗 Server Redirect (bit.ly style)</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" id="serverRedirectForm">
+                        <fieldset>
+                            <div class="form-group">
+                                <div class="container-fluid">
+                                    <div class="alert alert-info">
+                                        <strong>✨ No CORS Issues!</strong><br>
+                                        Server-side HTTP redirect (301/302) - works like bit.ly URL shortener.
+                                        When someone visits your webhook URL, they will be instantly redirected to the target URL.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Enable/Disable Toggle -->
+                            <div class="form-group">
+                                <label class="col-md-4 control-label">Status</label>
+                                <div class="col-md-7">
+                                    <span class="label" ng-class="token.server_redirect_enabled ? 'label-success' : 'label-default'">
+                                        {{ token.server_redirect_enabled ? 'ENABLED' : 'DISABLED' }}
+                                    </span>
+                                    <button type="button" class="btn btn-sm" 
+                                            ng-class="token.server_redirect_enabled ? 'btn-danger' : 'btn-success'"
+                                            ng-click="toggleServerRedirect()">
+                                        {{ token.server_redirect_enabled ? 'Disable' : 'Enable' }}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Redirect URL -->
+                            <div class="form-group">
+                                <label class="col-md-4 control-label" for="serverRedirectUrl">Redirect URL</label>
+                                <div class="col-md-7">
+                                    <input id="serverRedirectUrl" ng-model="token.server_redirect_url"
+                                           placeholder="https://example.com"
+                                           class="form-control input-md">
+                                    <p class="help-block small">Target URL to redirect visitors to</p>
+                                </div>
+                            </div>
+
+                            <!-- Redirect Mode -->
+                            <div class="form-group">
+                                <label class="col-md-4 control-label" for="redirectMode">Redirect Mode</label>
+                                <div class="col-md-7">
+                                    <select class="form-control input-md" ng-model="token.redirect_mode" id="redirectMode">
+                                        <option value="redirect">HTTP Redirect (301/302) - Recommended</option>
+                                        <option value="forward">Server Forward (Guzzle) - For webhooks</option>
+                                    </select>
+                                    <p class="help-block small">
+                                        <strong>HTTP Redirect:</strong> Browser redirects to target URL (bit.ly style)<br>
+                                        <strong>Server Forward:</strong> Request forwarded in background (for API testing)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Redirect Type -->
+                            <div class="form-group" ng-show="token.redirect_mode === 'redirect'">
+                                <label class="col-md-4 control-label" for="redirectType">HTTP Status Code</label>
+                                <div class="col-md-4">
+                                    <select class="form-control input-md" ng-model="token.redirect_type" id="redirectType">
+                                        <option value="301">301 - Permanent Redirect</option>
+                                        <option value="302">302 - Temporary Redirect (Default)</option>
+                                        <option value="307">307 - Temporary (Preserve Method)</option>
+                                        <option value="308">308 - Permanent (Preserve Method)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Preserve Path -->
+                            <div class="form-group">
+                                <label class="col-md-4 control-label">Preserve Path</label>
+                                <div class="col-md-7">
+                                    <label class="checkbox-inline">
+                                        <input type="checkbox" ng-model="token.preserve_path">
+                                        Append path from original URL
+                                    </label>
+                                    <p class="help-block small">
+                                        <strong>OFF (Default):</strong> All requests go to exact redirect URL<br>
+                                        <strong>ON:</strong> /token/path → redirect_url/path
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Preview -->
+                            <div class="form-group" ng-show="token.server_redirect_url">
+                                <label class="col-md-4 control-label">Preview</label>
+                                <div class="col-md-7">
+                                    <div class="well well-sm" style="word-break: break-all; font-family: monospace; font-size: 12px;">
+                                        <strong>Your URL:</strong><br>
+                                        {{ protocol }}//{{ domain }}/{{ token.uuid }}<br><br>
+                                        <strong>→ Redirects to:</strong><br>
+                                        {{ token.server_redirect_url }}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" ng-click="saveServerRedirect()" data-dismiss="modal">
+                        <span class="glyphicon glyphicon-ok"></span> Save Settings
                     </button>
                 </div>
             </div><!-- /.modal-content -->

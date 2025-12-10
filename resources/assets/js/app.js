@@ -488,6 +488,48 @@ angular
                 });
         });
 
+        // Server Redirect (bit.ly style)
+        
+        $scope.toggleServerRedirect = (function () {
+            $http.put('token/' + $scope.token.uuid + '/server-redirect/toggle')
+                .then(function (response) {
+                    if (response.status === 200) {
+                        $scope.token.server_redirect_enabled = response.data.enabled;
+                        if (response.data.enabled) {
+                            $.notify('Server Redirect enabled! Visitors will be redirected to: ' + $scope.token.server_redirect_url, {delay: 5000});
+                        } else {
+                            $.notify('Server Redirect disabled.');
+                        }
+                    } else {
+                        $.notify('Could not toggle redirect: ' + response.data.error.message);
+                    }
+                }).catch(function (response) {
+                    $.notify('Could not toggle redirect. Please save settings first.');
+                });
+        });
+
+        $scope.saveServerRedirect = (function () {
+            var formData = {
+                server_redirect_url: $scope.token.server_redirect_url || '',
+                redirect_mode: $scope.token.redirect_mode || 'redirect',
+                redirect_type: parseInt($scope.token.redirect_type) || 302,
+                preserve_path: $scope.token.preserve_path || false
+            };
+
+            $http.put('token/' + $scope.token.uuid + '/server-redirect', formData)
+                .then(function (response) {
+                    $scope.token = response.data;
+                    $.notify('Redirect settings saved!');
+                    
+                    // Auto-enable if URL is set and not already enabled
+                    if ($scope.token.server_redirect_url && !$scope.token.server_redirect_enabled) {
+                        $.notify('Click "Enable" to activate the redirect.', {delay: 5000, type: 'warning'});
+                    }
+                }).catch(function (response) {
+                    $.notify('Error saving redirect settings: ' + (response.data.message || 'Unknown error'), {type: 'danger'});
+                });
+        });
+
         // Pagination
 
         $scope.getPreviousPage = (function (token) {
