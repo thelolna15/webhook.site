@@ -23,16 +23,19 @@ WORKDIR /var/www/html
 # Contains laravel echo server proxy configuration
 COPY /nginx.conf /etc/nginx/conf.d
 
-# Upgrade to Composer 2 (Composer 1 no longer supported by Packagist)
 USER root
-RUN composer self-update --2
+
+# FIX: Mengambil binary Composer v2 terbaru langsung dari official image
+# Ini menggantikan perintah "composer self-update --2" yang error
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 USER www-data
 
 ADD --chown=www-data:www-data /composer.json /var/www/html
 ADD --chown=www-data:www-data /composer.lock /var/www/html
 
-# Install PHP dependencies (prestissimo not needed for Composer 2)
+# Install PHP dependencies
+# Catatan: prestissimo plugin tidak diperlukan di Composer 2, jadi aman
 RUN composer install --no-interaction --no-autoloader --no-dev --prefer-dist --no-scripts \
     && rm -rf /home/www-data/.composer/cache
 
