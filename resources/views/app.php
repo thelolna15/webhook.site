@@ -205,7 +205,7 @@
                                         Enable CORS &emsp;
                                     </label>
 
-                                    <!-- Server Redirect (bit.ly style) -->
+                                    <!-- Server Redirect -->
                                     <a href class="openModal btn btn-xs" 
                                        ng-class="token.server_redirect_enabled ? 'btn-success' : 'btn-default'"
                                        data-modal="#serverRedirectModal"
@@ -448,28 +448,23 @@
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span></button>
-                    <h4 class="modal-title">🔗 Server Redirect (bit.ly style)</h4>
+                    <h4 class="modal-title">🔗 Server Redirect</h4>
                 </div>
                 <div class="modal-body">
                     <form class="form-horizontal" id="serverRedirectForm">
                         <fieldset>
-                            <div class="form-group">
-                                <div class="container-fluid">
-                                    <div class="alert alert-info">
-                                        <strong>✨ No CORS Issues!</strong><br>
-                                        Server-side HTTP redirect (301/302) - works like bit.ly URL shortener.
-                                        When someone visits your webhook URL, they will be instantly redirected to the target URL.
-                                    </div>
-                                </div>
+                            <!-- Info Alert - Compact -->
+                            <div class="alert alert-info" style="margin-bottom: 20px; padding: 12px;">
+                                <strong>✨ No CORS Issues!</strong> - HTTP redirect langsung ke target URL.
                             </div>
 
-                            <!-- Enable/Disable Toggle -->
+                            <!-- Status & Enable Toggle -->
                             <div class="form-group">
-                                <label class="col-md-4 control-label">Status</label>
-                                <div class="col-md-7">
+                                <label class="col-md-3 control-label">Status</label>
+                                <div class="col-md-9">
                                     <span class="label" ng-class="token.server_redirect_enabled ? 'label-success' : 'label-default'">
                                         {{ token.server_redirect_enabled ? 'ENABLED' : 'DISABLED' }}
-                                    </span>
+                                    </span>&nbsp;
                                     <button type="button" class="btn btn-sm" 
                                             ng-class="token.server_redirect_enabled ? 'btn-danger' : 'btn-success'"
                                             ng-click="toggleServerRedirect()">
@@ -480,67 +475,56 @@
 
                             <!-- Redirect URL -->
                             <div class="form-group">
-                                <label class="col-md-4 control-label" for="serverRedirectUrl">Redirect URL</label>
-                                <div class="col-md-7">
-                                    <input id="serverRedirectUrl" ng-model="token.server_redirect_url"
+                                <label class="col-md-3 control-label">Redirect URL</label>
+                                <div class="col-md-9">
+                                    <input ng-model="token.server_redirect_url"
                                            placeholder="https://example.com"
-                                           class="form-control input-md">
-                                    <p class="help-block small">Target URL to redirect visitors to</p>
+                                           class="form-control">
                                 </div>
                             </div>
 
                             <!-- Redirect Mode -->
                             <div class="form-group">
-                                <label class="col-md-4 control-label" for="redirectMode">Redirect Mode</label>
-                                <div class="col-md-7">
-                                    <select class="form-control input-md" ng-model="token.redirect_mode" id="redirectMode">
-                                        <option value="redirect">HTTP Redirect (301/302) - Recommended</option>
-                                        <option value="forward">Server Forward (Guzzle) - For webhooks</option>
+                                <label class="col-md-3 control-label">Mode</label>
+                                <div class="col-md-9">
+                                    <select class="form-control" ng-model="token.redirect_mode">
+                                        <option value="redirect">HTTP Redirect (301/302)</option>
+                                        <option value="forward">Server Forward (Guzzle)</option>
                                     </select>
-                                    <p class="help-block small">
-                                        <strong>HTTP Redirect:</strong> Browser redirects to target URL (bit.ly style)<br>
-                                        <strong>Server Forward:</strong> Request forwarded in background (for API testing)
-                                    </p>
                                 </div>
                             </div>
 
-                            <!-- Redirect Type -->
+                            <!-- Redirect Type - Only show for redirect mode -->
                             <div class="form-group" ng-show="token.redirect_mode === 'redirect'">
-                                <label class="col-md-4 control-label" for="redirectType">HTTP Status Code</label>
-                                <div class="col-md-4">
-                                    <select class="form-control input-md" ng-model="token.redirect_type" id="redirectType">
-                                        <option value="301">301 - Permanent Redirect</option>
-                                        <option value="302">302 - Temporary Redirect (Default)</option>
-                                        <option value="307">307 - Temporary (Preserve Method)</option>
-                                        <option value="308">308 - Permanent (Preserve Method)</option>
+                                <label class="col-md-3 control-label">HTTP Code</label>
+                                <div class="col-md-5">
+                                    <select class="form-control" ng-model="token.redirect_type">
+                                        <option value="301">301 - Permanent</option>
+                                        <option value="302">302 - Temporary</option>
+                                        <option value="307">307 - Temp (Keep Method)</option>
+                                        <option value="308">308 - Perm (Keep Method)</option>
                                     </select>
                                 </div>
                             </div>
 
-                            <!-- Preserve Path -->
+                            <!-- Preserve Path - Compact -->
                             <div class="form-group">
-                                <label class="col-md-4 control-label">Preserve Path</label>
-                                <div class="col-md-7">
+                                <label class="col-md-3 control-label">Options</label>
+                                <div class="col-md-9">
                                     <label class="checkbox-inline">
                                         <input type="checkbox" ng-model="token.preserve_path">
-                                        Append path from original URL
+                                        Preserve path dari URL asli
                                     </label>
-                                    <p class="help-block small">
-                                        <strong>OFF (Default):</strong> All requests go to exact redirect URL<br>
-                                        <strong>ON:</strong> /token/path → redirect_url/path
-                                    </p>
                                 </div>
                             </div>
 
-                            <!-- Preview -->
+                            <!-- Preview - Compact -->
                             <div class="form-group" ng-show="token.server_redirect_url">
-                                <label class="col-md-4 control-label">Preview</label>
-                                <div class="col-md-7">
-                                    <div class="well well-sm" style="word-break: break-all; font-family: monospace; font-size: 12px; color:black">
-                                        <strong>Your URL:</strong><br>
-                                        {{ protocol }}//{{ domain }}/{{ token.uuid }}<br><br>
-                                        <strong>→ Redirects to:</strong><br>
-                                        {{ token.server_redirect_url }}
+                                <label class="col-md-3 control-label">Preview</label>
+                                <div class="col-md-9">
+                                    <div style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 10px; font-family: monospace; font-size: 11px; word-break: break-all;">
+                                        <span style="color: #888;">{{ protocol }}//{{ domain }}/{{ token.uuid }}</span><br>
+                                        <span style="color: #00e676;">→ {{ token.server_redirect_url }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -551,7 +535,7 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" ng-click="saveServerRedirect()" data-dismiss="modal">
-                        <span class="glyphicon glyphicon-ok"></span> Save Settings
+                        Save Settings
                     </button>
                 </div>
             </div><!-- /.modal-content -->

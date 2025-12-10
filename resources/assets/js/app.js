@@ -488,7 +488,7 @@ angular
                 });
         });
 
-        // Server Redirect (bit.ly style)
+        // Server Redirect 
         
         $scope.toggleServerRedirect = (function () {
             $http.put('token/' + $scope.token.uuid + '/server-redirect/toggle')

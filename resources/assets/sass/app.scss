@@ -250,16 +250,29 @@ pre {
 }
 
 /*
- * Modals
+ * Modals - Scrollable & Responsive
  */
+.modal {
+  overflow-y: auto !important;
+}
+
+.modal-dialog {
+  margin: 30px auto;
+  max-height: calc(100vh - 60px);
+}
+
 .modal-content {
   border-radius: 12px;
   border: 1px solid $border-color;
   box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
   
   .modal-header {
     border-bottom: 1px solid $border-color;
     padding: 20px;
+    flex-shrink: 0;
     
     .modal-title {
       font-weight: 600;
@@ -280,11 +293,15 @@ pre {
   
   .modal-body {
     padding: 25px;
+    overflow-y: auto;
+    flex: 1;
+    max-height: calc(100vh - 200px);
   }
   
   .modal-footer {
     border-top: 1px solid $border-color;
     padding: 20px;
+    flex-shrink: 0;
   }
 }
 
@@ -345,6 +362,61 @@ div#tutorial {
   
   &:hover {
     background: lighten($bg-hover, 10%);
+  }
+}
+
+/*
+ * Alerts - Dark Theme
+ */
+.alert {
+  border-radius: 8px;
+  border: none;
+  
+  &-info {
+    background: rgba($info, 0.15);
+    color: lighten($info, 20%);
+    border-left: 3px solid $info;
+  }
+  
+  &-success {
+    background: rgba($success, 0.15);
+    color: lighten($success, 10%);
+    border-left: 3px solid $success;
+  }
+  
+  &-warning {
+    background: rgba($warning, 0.15);
+    color: $warning;
+    border-left: 3px solid $warning;
+  }
+  
+  &-danger {
+    background: rgba($danger, 0.15);
+    color: lighten($danger, 10%);
+    border-left: 3px solid $danger;
+  }
+}
+
+/*
+ * Well - Dark Theme
+ */
+.well {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 6px;
+  color: $text-primary;
+  box-shadow: none;
+}
+
+/*
+ * Checkbox & Radio - Dark Theme
+ */
+.checkbox-inline, .radio-inline {
+  color: $text-secondary;
+  
+  input[type="checkbox"],
+  input[type="radio"] {
+    margin-right: 5px;
   }
 }
 
