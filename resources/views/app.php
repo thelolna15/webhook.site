@@ -536,7 +536,7 @@
                             <div class="form-group" ng-show="token.server_redirect_url">
                                 <label class="col-md-4 control-label">Preview</label>
                                 <div class="col-md-7">
-                                    <div class="well well-sm" style="word-break: break-all; font-family: monospace; font-size: 12px;">
+                                    <div class="well well-sm" style="word-break: break-all; font-family: monospace; font-size: 12px; color:black">
                                         <strong>Your URL:</strong><br>
                                         {{ protocol }}//{{ domain }}/{{ token.uuid }}<br><br>
                                         <strong>→ Redirects to:</strong><br>
