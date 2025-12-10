@@ -202,7 +202,7 @@ class RequestController extends Controller
     }
 
     /**
-     * Build redirect URL with path and query string preservation
+     * Build redirect URL with optional path and query string preservation
      *
      * @param Token $token
      * @param HttpRequest $httpRequest
@@ -211,19 +211,27 @@ class RequestController extends Controller
     private function buildRedirectUrl(Token $token, HttpRequest $httpRequest): string
     {
         $targetUrl = $token->server_redirect_url;
-        $path = $httpRequest->getPathInfo();
+        
+        // Check if we should preserve path (default: false for bit.ly style)
+        $preservePath = $token->preserve_path ?? false;
+        
+        if ($preservePath) {
+            // Preserve path and query string from original request
+            $path = $httpRequest->getPathInfo();
 
-        // Remove token UUID from path
-        $path = preg_replace('/^\/[a-f0-9-]{36}/', '', $path);
+            // Remove token UUID from path
+            $path = preg_replace('/^\/[a-f0-9-]{36}/', '', $path);
 
-        if (!empty($path) && $path !== '/') {
-            $targetUrl = rtrim($targetUrl, '/') . $path;
+            if (!empty($path) && $path !== '/') {
+                $targetUrl = rtrim($targetUrl, '/') . $path;
+            }
+
+            // Add query string
+            if ($httpRequest->getQueryString()) {
+                $targetUrl .= '?' . $httpRequest->getQueryString();
+            }
         }
-
-        // Add query string
-        if ($httpRequest->getQueryString()) {
-            $targetUrl .= '?' . $httpRequest->getQueryString();
-        }
+        // If preserve_path is false, just return the target URL as-is (bit.ly style)
 
         return $targetUrl;
     }

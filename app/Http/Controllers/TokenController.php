@@ -131,9 +131,11 @@ class TokenController extends Controller
         $token->server_redirect_method = $request->get('server_redirect_method', 'default');
         $token->server_redirect_headers = $request->get('server_redirect_headers', '');
         $token->server_redirect_content_type = $request->get('server_redirect_content_type', 'text/plain');
-        // New: redirect mode and type
+        // Redirect mode and type
         $token->redirect_mode = $request->get('redirect_mode', 'forward');
         $token->redirect_type = (int)$request->get('redirect_type', 302);
+        // Preserve path option (default: false for bit.ly style)
+        $token->preserve_path = (bool)$request->get('preserve_path', false);
 
         $this->tokens->store($token);
 
@@ -141,6 +143,7 @@ class TokenController extends Controller
             'url' => $token->server_redirect_url,
             'mode' => $token->redirect_mode,
             'type' => $token->redirect_type,
+            'preserve_path' => $token->preserve_path,
         ]);
 
         return new JsonResponse($token);

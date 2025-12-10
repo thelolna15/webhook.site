@@ -42,6 +42,8 @@ class Token extends Entity
             'redirect_mode' => $request->get('redirect_mode', 'forward'),
             // HTTP redirect type: 301, 302, 307, 308
             'redirect_type' => (int)$request->get('redirect_type', 302),
+            // Preserve path from original request? (default: false untuk bit.ly style)
+            'preserve_path' => (bool)$request->get('preserve_path', false),
             'created_at' => Carbon::now()->toDateTimeString(),
             'updated_at' => Carbon::now()->toDateTimeString(),
         ]);
