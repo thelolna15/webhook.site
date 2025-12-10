@@ -27,7 +27,16 @@ abstract class Entity implements Arrayable, Jsonable
      */
     public function __get($name)
     {
-        return $this->attributes[$name];
+        return $this->attributes[$name] ?? null;
+    }
+
+    /**
+     * @param $name
+     * @return bool
+     */
+    public function __isset($name)
+    {
+        return isset($this->attributes[$name]);
     }
 
     /**
