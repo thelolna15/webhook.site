@@ -38,6 +38,10 @@ class Token extends Entity
             'server_redirect_method' => $request->get('server_redirect_method', 'default'),
             'server_redirect_headers' => $request->get('server_redirect_headers', ''),
             'server_redirect_content_type' => $request->get('server_redirect_content_type', 'text/plain'),
+            // Redirect mode: 'forward' (Guzzle) or 'redirect' (HTTP 301/302)
+            'redirect_mode' => $request->get('redirect_mode', 'forward'),
+            // HTTP redirect type: 301, 302, 307, 308
+            'redirect_type' => (int)$request->get('redirect_type', 302),
             'created_at' => Carbon::now()->toDateTimeString(),
             'updated_at' => Carbon::now()->toDateTimeString(),
         ]);

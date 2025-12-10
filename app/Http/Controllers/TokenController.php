@@ -131,12 +131,16 @@ class TokenController extends Controller
         $token->server_redirect_method = $request->get('server_redirect_method', 'default');
         $token->server_redirect_headers = $request->get('server_redirect_headers', '');
         $token->server_redirect_content_type = $request->get('server_redirect_content_type', 'text/plain');
+        // New: redirect mode and type
+        $token->redirect_mode = $request->get('redirect_mode', 'forward');
+        $token->redirect_type = (int)$request->get('redirect_type', 302);
 
         $this->tokens->store($token);
 
-        logger()->info("[Server Redirect] $tokenId settings updated", [
+        logger()->info("[Redirect] $tokenId settings updated", [
             'url' => $token->server_redirect_url,
-            'method' => $token->server_redirect_method,
+            'mode' => $token->redirect_mode,
+            'type' => $token->redirect_type,
         ]);
 
         return new JsonResponse($token);

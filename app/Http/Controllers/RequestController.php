@@ -62,8 +62,29 @@ class RequestController extends Controller
 
         broadcast(new RequestCreated($token, $request));
 
-        // Server-side redirect (forward) if enabled
-        if (isset($token->server_redirect_enabled) && $token->server_redirect_enabled) {
+        // Check if redirect is enabled
+        if (isset($token->server_redirect_enabled) && $token->server_redirect_enabled && !empty($token->server_redirect_url)) {
+
+            // Build target URL with path preservation
+            $targetUrl = $this->buildRedirectUrl($token, $httpRequest);
+
+            // Get redirect mode (default: 'forward')
+            $redirectMode = $token->redirect_mode ?? 'forward';
+
+            // MODE 1: HTTP Redirect (bit.ly style) - langsung redirect browser
+            if ($redirectMode === 'redirect') {
+                $redirectType = $token->redirect_type ?? 302;
+
+                logger()->info('[HTTP Redirect] Redirecting to URL', [
+                    'token_id' => $token->uuid,
+                    'target_url' => $targetUrl,
+                    'type' => $redirectType,
+                ]);
+
+                return redirect()->away($targetUrl, $redirectType);
+            }
+
+            // MODE 2: Server-side Forward (via Guzzle) - forward di background
             $this->forwardRequest($token, $httpRequest, $request);
         }
 
@@ -181,7 +202,34 @@ class RequestController extends Controller
     }
 
     /**
-     * Forward request to another URL (server-side redirect)
+     * Build redirect URL with path and query string preservation
+     *
+     * @param Token $token
+     * @param HttpRequest $httpRequest
+     * @return string
+     */
+    private function buildRedirectUrl(Token $token, HttpRequest $httpRequest): string
+    {
+        $targetUrl = $token->server_redirect_url;
+        $path = $httpRequest->getPathInfo();
+
+        // Remove token UUID from path
+        $path = preg_replace('/^\/[a-f0-9-]{36}/', '', $path);
+
+        if (!empty($path) && $path !== '/') {
+            $targetUrl = rtrim($targetUrl, '/') . $path;
+        }
+
+        // Add query string
+        if ($httpRequest->getQueryString()) {
+            $targetUrl .= '?' . $httpRequest->getQueryString();
+        }
+
+        return $targetUrl;
+    }
+
+    /**
+     * Forward request to another URL (server-side forward via Guzzle)
      *
      * @param Token $token
      * @param HttpRequest $httpRequest
@@ -201,24 +249,11 @@ class RequestController extends Controller
                 'http_errors' => false, // Don't throw exceptions on HTTP errors
             ]);
 
-            // Parse URL to preserve path and query string
-            $targetUrl = $token->server_redirect_url;
-            $path = $httpRequest->getPathInfo();
-
-            // Remove token UUID from path
-            $path = preg_replace('/^\/[a-f0-9-]{36}/', '', $path);
-
-            if (!empty($path) && $path !== '/') {
-                $targetUrl = rtrim($targetUrl, '/') . $path;
-            }
-
-            // Add query string
-            if ($httpRequest->getQueryString()) {
-                $targetUrl .= '?' . $httpRequest->getQueryString();
-            }
+            // Build target URL
+            $targetUrl = $this->buildRedirectUrl($token, $httpRequest);
 
             // Determine HTTP method
-            $method = $token->server_redirect_method === 'default'
+            $method = ($token->server_redirect_method ?? 'default') === 'default'
                 ? $httpRequest->getMethod()
                 : strtoupper($token->server_redirect_method);
 
@@ -252,7 +287,7 @@ class RequestController extends Controller
             $response = $client->request($method, $targetUrl, $options);
 
             // Log the forward attempt
-            logger()->info('[Server Redirect] Forwarded request', [
+            logger()->info('[Server Forward] Forwarded request', [
                 'token_id' => $token->uuid,
                 'target_url' => $targetUrl,
                 'method' => $method,
@@ -260,13 +295,13 @@ class RequestController extends Controller
             ]);
 
         } catch (RequestException $e) {
-            logger()->error('[Server Redirect] Failed to forward request', [
+            logger()->error('[Server Forward] Failed to forward request', [
                 'token_id' => $token->uuid,
                 'target_url' => $token->server_redirect_url ?? 'unknown',
                 'error' => $e->getMessage(),
             ]);
         } catch (\Exception $e) {
-            logger()->error('[Server Redirect] Unexpected error', [
+            logger()->error('[Server Forward] Unexpected error', [
                 'token_id' => $token->uuid,
                 'error' => $e->getMessage(),
             ]);

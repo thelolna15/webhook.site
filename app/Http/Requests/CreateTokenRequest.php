@@ -30,6 +30,9 @@ class CreateTokenRequest extends Request
             'server_redirect_method' => ['string', 'nullable'],
             'server_redirect_headers' => ['string', 'nullable'],
             'server_redirect_content_type' => ['string', 'nullable'],
+            // New: redirect mode and type
+            'redirect_mode' => ['string', 'nullable', 'in:forward,redirect'],
+            'redirect_type' => ['int', 'nullable', 'in:301,302,307,308'],
         ];
     }
 }
