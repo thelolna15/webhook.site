@@ -26,6 +26,10 @@ class CreateTokenRequest extends Request
             'default_content_type' => ['string'],
             'default_status' => ['int'],
             'timeout' => ['int', 'min:0', 'max:10'],
+            'server_redirect_url' => ['string', 'nullable'],
+            'server_redirect_method' => ['string', 'nullable'],
+            'server_redirect_headers' => ['string', 'nullable'],
+            'server_redirect_content_type' => ['string', 'nullable'],
         ];
     }
 }

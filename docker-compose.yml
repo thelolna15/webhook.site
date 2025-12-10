@@ -1,10 +1,10 @@
 services:
   webhook-site:
-    image: webhooksite/webhook.site
+    # image: webhooksite/webhook.site
     # Enable build for development:
-    # build:
-    #   dockerfile: Dockerfile
-    #   context: ./
+    build:
+      dockerfile: Dockerfile
+      context: ./
     container_name: webhook-site
     restart: always
     ports:

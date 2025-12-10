@@ -32,6 +32,12 @@ class Token extends Entity
             'default_content_type' => $request->get('default_content_type', 'text/plain'),
             'timeout' => (int)$request->get('timeout', null),
             'cors' => false,
+            // Server-side redirect settings
+            'server_redirect_enabled' => false,
+            'server_redirect_url' => $request->get('server_redirect_url', ''),
+            'server_redirect_method' => $request->get('server_redirect_method', 'default'),
+            'server_redirect_headers' => $request->get('server_redirect_headers', ''),
+            'server_redirect_content_type' => $request->get('server_redirect_content_type', 'text/plain'),
             'created_at' => Carbon::now()->toDateTimeString(),
             'updated_at' => Carbon::now()->toDateTimeString(),
         ]);

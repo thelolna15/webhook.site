@@ -11,6 +11,8 @@ use Illuminate\Cache\Repository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Http\Response;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 
 class RequestController extends Controller
 {
@@ -59,6 +61,11 @@ class RequestController extends Controller
         $this->requests->store($token, $request);
 
         broadcast(new RequestCreated($token, $request));
+
+        // Server-side redirect (forward) if enabled
+        if (isset($token->server_redirect_enabled) && $token->server_redirect_enabled) {
+            $this->forwardRequest($token, $httpRequest, $request);
+        }
 
         $responseStatus = preg_match('/[1-5][0-9][0-9]/', $httpRequest->segment(2))
             ? $httpRequest->segment(2)
@@ -171,5 +178,98 @@ class RequestController extends Controller
         return new JsonResponse([
             'status' => (bool)$this->requests->deleteByToken($token)
         ]);
+    }
+
+    /**
+     * Forward request to another URL (server-side redirect)
+     *
+     * @param Token $token
+     * @param HttpRequest $httpRequest
+     * @param Request $request
+     * @return void
+     */
+    private function forwardRequest(Token $token, HttpRequest $httpRequest, Request $request)
+    {
+        try {
+            if (empty($token->server_redirect_url)) {
+                return;
+            }
+
+            $client = new Client([
+                'timeout' => 30,
+                'verify' => false, // Disable SSL verification for testing
+                'http_errors' => false, // Don't throw exceptions on HTTP errors
+            ]);
+
+            // Parse URL to preserve path and query string
+            $targetUrl = $token->server_redirect_url;
+            $path = $httpRequest->getPathInfo();
+
+            // Remove token UUID from path
+            $path = preg_replace('/^\/[a-f0-9-]{36}/', '', $path);
+
+            if (!empty($path) && $path !== '/') {
+                $targetUrl = rtrim($targetUrl, '/') . $path;
+            }
+
+            // Add query string
+            if ($httpRequest->getQueryString()) {
+                $targetUrl .= '?' . $httpRequest->getQueryString();
+            }
+
+            // Determine HTTP method
+            $method = $token->server_redirect_method === 'default'
+                ? $httpRequest->getMethod()
+                : strtoupper($token->server_redirect_method);
+
+            // Build headers
+            $headers = [
+                'Content-Type' => $token->server_redirect_content_type ?: 'text/plain',
+            ];
+
+            // Add specified headers from original request
+            if (!empty($token->server_redirect_headers)) {
+                $headersList = array_map('trim', explode(',', $token->server_redirect_headers));
+                foreach ($headersList as $headerName) {
+                    $headerValue = $httpRequest->header($headerName);
+                    if ($headerValue) {
+                        $headers[$headerName] = $headerValue;
+                    }
+                }
+            }
+
+            // Prepare request options
+            $options = [
+                'headers' => $headers,
+            ];
+
+            // Add body for POST, PUT, PATCH methods
+            if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
+                $options['body'] = $request->content;
+            }
+
+            // Send request
+            $response = $client->request($method, $targetUrl, $options);
+
+            // Log the forward attempt
+            logger()->info('[Server Redirect] Forwarded request', [
+                'token_id' => $token->uuid,
+                'target_url' => $targetUrl,
+                'method' => $method,
+                'status' => $response->getStatusCode(),
+            ]);
+
+        } catch (RequestException $e) {
+            logger()->error('[Server Redirect] Failed to forward request', [
+                'token_id' => $token->uuid,
+                'target_url' => $token->server_redirect_url ?? 'unknown',
+                'error' => $e->getMessage(),
+            ]);
+        } catch (\Exception $e) {
+            logger()->error('[Server Redirect] Unexpected error', [
+                'token_id' => $token->uuid,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

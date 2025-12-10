@@ -92,4 +92,53 @@ class TokenController extends Controller
 
         return new JsonResponse(['enabled' => $token->cors]);
     }
+
+    /**
+     * Toggle server-side redirect
+     *
+     * @param string $tokenId
+     * @return JsonResponse
+     */
+    public function toggleServerRedirect(string $tokenId): JsonResponse
+    {
+        $token = $this->tokens->find($tokenId);
+
+        $token->server_redirect_enabled = isset($token->server_redirect_enabled)
+            ? !$token->server_redirect_enabled
+            : true;
+
+        $this->tokens->store($token);
+
+        logger()->info("[Server Redirect] $tokenId toggle", [
+            'enabled' => $token->server_redirect_enabled
+        ]);
+
+        return new JsonResponse(['enabled' => $token->server_redirect_enabled]);
+    }
+
+    /**
+     * Update server redirect settings
+     *
+     * @param CreateTokenRequest $request
+     * @param string $tokenId
+     * @return JsonResponse
+     */
+    public function updateServerRedirect(CreateTokenRequest $request, string $tokenId): JsonResponse
+    {
+        $token = $this->tokens->find($tokenId);
+
+        $token->server_redirect_url = $request->get('server_redirect_url', '');
+        $token->server_redirect_method = $request->get('server_redirect_method', 'default');
+        $token->server_redirect_headers = $request->get('server_redirect_headers', '');
+        $token->server_redirect_content_type = $request->get('server_redirect_content_type', 'text/plain');
+
+        $this->tokens->store($token);
+
+        logger()->info("[Server Redirect] $tokenId settings updated", [
+            'url' => $token->server_redirect_url,
+            'method' => $token->server_redirect_method,
+        ]);
+
+        return new JsonResponse($token);
+    }
 }
